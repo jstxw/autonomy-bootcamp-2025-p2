@@ -22,7 +22,8 @@ def heartbeat_sender_worker(self,
     autopilot: int = mavutil.mavlink.MAV_AUTOPILOT_INVALID,
     base_mode: int = mavutil.mavlink.MAV_MODE_FLAG,
     custom_mode: int =0,
-    system_status: int = mavutil.mavlink.MAV_STATE_UNINIT,    
+    system_status: int = mavutil.mavlink.MAV_STATE_UNINIT, 
+    controller: worker_controller.WorkerController = None,   
     
     system_id: int = 1, 
     component_id: int = 1, 
@@ -66,19 +67,8 @@ def heartbeat_sender_worker(self,
     #                          ↓ BOOTCAMPERS MODIFY BELOW THIS COMMENT ↓
     # =============================================================================================
     # Instantiate class object (heartbeat_sender.HeartbeatSender)
-
-    sender = heartbeat_sender.HeartbeatSender(
-        connection=connection,
-        type=type,
-        autopilot=autopilot,
-        base_mode=base_mode,
-        custom_mode=custom_mode,
-        system_status=system_status,
-        system_id=system_id,
-        component_id=component_id,
-        heartbeat_interval=heartbeat_interval,
-        logger=local_logger
-    )
+    result, heartbeat_sender_instance=heartbeat_sender.HeartBeat.create(
+        connection, local_logger)
 
     # Main loop: do work.
     # Logic: while not stopped, do work. soft pause with worker_pause_event. then do work through
