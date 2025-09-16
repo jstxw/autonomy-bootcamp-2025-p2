@@ -5,6 +5,7 @@ Decision-making logic.
 import math
 
 from pymavlink import mavutil
+import time
 
 from ..common.modules.logger import logger
 from ..telemetry import telemetry
@@ -37,29 +38,40 @@ class Command:  # pylint: disable=too-many-instance-attributes
         cls,
         connection: mavutil.mavfile,
         target: Position,
-        args,  # Put your own arguments here
         local_logger: logger.Logger,
     ):
         """
         Falliable create (instantiation) method to create a Command object.
         """
         pass  #  Create a Command object
+        try: 
+            cmd = (cls.__private_key, connection, target, local_logger)
+            return cmd, True 
+        
+        except Exception as e:
+            local_logger.error(f"Failure to create command object: {e}")
+            return False, None 
 
     def __init__(
         self,
         key: object,
         connection: mavutil.mavfile,
         target: Position,
-        args,  # Put your own arguments here
         local_logger: logger.Logger,
     ) -> None:
         assert key is Command.__private_key, "Use create() method"
 
         # Do any intializiation here
 
-    def run(
-        self,
-        args,  # Put your own arguments here
+        self.connection=connection, 
+        self.target = target, 
+        self.local_logger = local_logger
+        self.start_pos = None
+        self.start_time = None
+        self.data = None
+
+    def run(self,
+        data: telemetry.TelemetryData
     ):
         """
         Make a decision based on received telemetry data.

@@ -6,6 +6,7 @@ import time
 
 from pymavlink import mavutil
 
+from typing import Tuple, Optional, Literal
 from ..common.modules.logger import logger
 
 
@@ -76,14 +77,19 @@ class Telemetry:
     def create(
         cls,
         connection: mavutil.mavfile,
-        args,  # Put your own arguments here
         local_logger: logger.Logger,
-    ):
+    ) -> Tuple[Literal[True], "Telemetry"] | Tuple[Literal[False], None]:
+        
         """
         Falliable create (instantiation) method to create a Telemetry object.
         """
-        pass  # Create a Telemetry object
-
+        try:
+            telemetry = cls(cls.__private_key, connection, local_logger)
+            return True, telemetry
+        except Exception as e:
+            local_logger.error(f"Failed to create telemetry object: {e}")
+            return False, None
+        
     def __init__(
         self,
         key: object,
@@ -93,12 +99,15 @@ class Telemetry:
     ) -> None:
         assert key is Telemetry.__private_key, "Use create() method"
 
-        # Do any intializiation here
+        self.connection = connection
+        self.local_logger = local_logger
+        self.alt = None
+        self.pos = None
 
     def run(
         self,
-        args,  # Put your own arguments here
-    ):
+
+        ) -> TelemetryData | None:
         """
         Receive LOCAL_POSITION_NED and ATTITUDE messages from the drone,
         combining them together to form a single TelemetryData object.
