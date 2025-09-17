@@ -94,7 +94,6 @@ class Telemetry:
         self,
         key: object,
         connection: mavutil.mavfile,
-        args,  # Put your own arguments here
         local_logger: logger.Logger,
     ) -> None:
         assert key is Telemetry.__private_key, "Use create() method"
@@ -115,7 +114,51 @@ class Telemetry:
         # Read MAVLink message LOCAL_POSITION_NED (32)
         # Read MAVLink message ATTITUDE (30)
         # Return the most recent of both, and use the most recent message's timestamp
-        pass
+        timeout = 1.0
+        start = time.time()
+
+        try:
+            while((time.time() - start) < timeout):
+                msg = self.connection.recv_match(type=["ATTITUDE", "LOCAL_POSITION_NED"], blocking=False, timeout=0.0
+)
+
+                if msg is None:
+                    time.sleep(0.01)
+                    continue
+
+                if msg.get_type() == "LOCAL_POSITION_NED":
+                    self.last_pos = msg
+                elif msg.get_type() == "ATTITUDE":
+                    self.last_attitude = msg
+
+                if self.last_pos and self.last_attitude:
+
+                    telemetry_data = TelemetryData(
+                        time_since_boot=max(self.last_attitude.time_boot_ms, self.last_pos.time_boot_ms),
+                        x=self.last_pos.x,
+                        y=self.last_pos.y,
+                        z=self.last_pos.z,
+                        x_velocity=self.last_pos.vx,
+                        y_velocity=self.last_pos.vy,
+                        z_velocity=self.last_pos.vz,
+                        roll=self.last_attitude.roll,
+                        pitch=self.last_attitude.pitch,
+                        yaw=self.last_attitude.yaw,
+                        roll_speed=self.last_attitude.rollspeed,
+                        pitch_speed=self.last_attitude.pitchspeed,
+                        yaw_speed=self.last_attitude.yawspeed
+                    )
+                    self.last_attitude = None
+                    self.last_pos = None
+                    return telemetry_data
+
+            self.last_attitude = None
+            self.last_pos = None
+            return None 
+        
+        except Exception as e:
+            self.local_logger.error(f"Error trying to create telemetry data object: {e}", True)
+            return None
 
 
 # =================================================================================================
