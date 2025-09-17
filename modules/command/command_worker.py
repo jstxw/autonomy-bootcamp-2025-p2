@@ -50,7 +50,7 @@ def command_worker(
     # =============================================================================================
     # Instantiate class object (command.Command)
 
-    result, cmd = command.Command.create(connection=connection, local_logger=local_logger, target=target, )
+    result, cmd = command.Command.create(connection=connection, local_logger=local_logger, target=target)
 
     # Main loop: do work.
 

@@ -50,7 +50,6 @@ def start_drone() -> None:
 # =================================================================================================
 def stop(
     controller = worker_controller.WorkerController,
-    args=None,
 ) -> None:
     """
     Stop the workers.
@@ -58,7 +57,7 @@ def stop(
     controller.is_exit_requested()
 
 def read_queue(
-    queue: queue_proxy_wrapper.QueueProxyWrapper,
+    output_queue: queue_proxy_wrapper.QueueProxyWrapper,
     main_logger: logger.Logger,
 ) -> None:
     """
@@ -66,12 +65,12 @@ def read_queue(
     """
     while True:
         try: 
-            status = queue.queue.get(timeout=1)
+            status = output_queue.queue.get(timeout=1)
             if status == "stop":
                 break
             main_logger.info(f"Queue Status: {status}")
-        except: 
-            continue 
+        except Exception as e: 
+            break
 
 # =================================================================================================
 #                            ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
@@ -126,7 +125,7 @@ def main() -> int:
     manager=mp.manager()
 
     # Create your queues
-    queue = queue_proxy_wrapper.QueueProxyWrapper(manager)
+    output_queue = queue_proxy_wrapper.QueueProxyWrapper(manager)
 
     # Just set a timer to stop the worker after a while, since the worker infinite loops
     threading.Timer(
@@ -136,11 +135,11 @@ def main() -> int:
     ).start()
 
     # Read the main queue (worker outputs)
-    threading.Thread(target=read_queue, args=(queue, main_logger)).start()
+    threading.Thread(target=read_queue, args=(output_queue, main_logger)).start()
 
     heartbeat_receiver_worker.heartbeat_receiver_worker(
         # Place your own arguments here
-        connection=connection, queue=queue, args=None, controller=controller
+        connection=connection, queue=output_queue, controller=controller
     )
     # =============================================================================================
     #                          ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
