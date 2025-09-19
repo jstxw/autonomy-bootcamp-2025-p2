@@ -18,7 +18,7 @@ from ..common.modules.logger import logger
 # =================================================================================================
 def heartbeat_sender_worker(
     connection: mavutil.mavfile,
-    controller: worker_controller.WorkerController
+    controller: worker_controller.WorkerController,
     #use proper type annotations int
     # Place your own arguments here
     # Add other necessary worker arguments here
@@ -64,13 +64,13 @@ def heartbeat_sender_worker(
 
     while not controller.is_exit_requested(): 
         try: 
-            success = sender.run(local_logger=local_logger)
+            success = sender.run()
             if not success:
                 local_logger.error("Failed to send heartbeat")
 
         except Exception as e: 
             local_logger.error(f"Error with heartbeat: {e}", True)
-            time.sleep(1)
+        time.sleep(1)
 
 
         

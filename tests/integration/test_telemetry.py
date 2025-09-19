@@ -47,12 +47,12 @@ def start_drone() -> None:
 #                            ↓ BOOTCAMPERS MODIFY BELOW THIS COMMENT ↓
 # =================================================================================================
 def stop(
-    controller = worker_controller.WorkerController()
+    controller = worker_controller.WorkerController
 ) -> None:
     """
     Stop the workers.
     """
-    controller.is_exit_requested(),
+    controller.is_exit_requested()
 
 def read_queue(
     main_logger: logger.Logger,
@@ -63,10 +63,10 @@ def read_queue(
     """
     while True:  # Add logic to read from your worker's output queue and print it using the logger
         try: 
-            output_queue=output_queue.queue.get(timeout=1)
-            main_logger.info(f"The output queue is: {output_queue}")
+            item=output_queue.queue.get(timeout=1)
+            main_logger.info(f"The output queue is: {item}")
         except Exception as e:
-            break
+            main_logger.error(f"Queue read timeout: {e}")
 
 
 # =================================================================================================
@@ -116,23 +116,23 @@ def main() -> int:
     # Mock starting a worker, since cannot actually start a new process
     # Create a worker controller for your worker
 
-    controller=worker_controller.WorkerController(),
+    controller=worker_controller.WorkerController()
 
     # Create a multiprocess manager for synchronized queues
     manager = mp.Manager()
 
     # Create your queues
 
-    output_queue=queue_proxy_wrapper.QueueProxyWrapper(manager),
+    output_queue=queue_proxy_wrapper.QueueProxyWrapper(manager)
 
     # Just set a timer to stop the worker after a while, since the worker infinite loops
-    threading.Timer(TELEMETRY_PERIOD * NUM_TRIALS * 2 + NUM_FAILS, stop, (controller,)).start()
+    threading.Timer(TELEMETRY_PERIOD * NUM_TRIALS * 2 + NUM_FAILS, stop, args=[controller]).start()
 
     # Read the main queue (worker outputs)
-    threading.Thread(target=read_queue, args=(output_queue, main_logger)).start()
+    threading.Thread(target=read_queue, args=(main_logger, output_queue)).start()
 
     telemetry_worker.telemetry_worker(
-        controller=controller, output_queue=output_queue, main_logger=main_logger
+        controller=controller, output_queue=output_queue, main_logger=main_logger, connection=connection
     )
     # =============================================================================================
     #                          ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
